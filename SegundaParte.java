@@ -1,15 +1,13 @@
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import java.io.File;
-
 import javax.xml.parsers.DocumentBuilder;
-import org.w3c.dom.Document;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import org.w3c.dom.Element;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class SegundaParte {
     public static void main(String[] args) {
@@ -17,32 +15,32 @@ public class SegundaParte {
     }
 
     private void inicio() {
+        String ruta = "bookings.xml";
         try {
-            Document doc = crearDocumentoXML();
+            Document document = parsearDocumentoXML(ruta);
+            crearXMLNuevo(document);
 
-            String filePath = "C:\\\\Users\\\\yarac\\\\Desktop\\\\2DAM\\\\acceso a datos\\\\Acceso a ficheros\\\\Act 10\\\\information.xml"; 
-
-            escribirDocumentoXML(doc, filePath);
-            
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void escribirDocumentoXML(Document doc, String filePath) {
+    private Document parsearDocumentoXML(String filePath) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.parse(new File(filePath));
+    }
+
+    private void crearXMLNuevo(Document document) {
         try {
+            Document doc = crearDocumentoXML();
 
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-
-            DOMSource source = new DOMSource(doc);
-
-            StreamResult result = new StreamResult(new File(filePath));
-
-            transformer.transform(source, result);
-
-            System.out.println("Documento XML creado en: " + filePath);
+            // Crear nodos y estructura
+            crearClientes(document, doc);
+            crearAgencias(document, doc);
+            crearRooms(document, doc);
+            crearHoteles(document, doc);
+            guardarXML(doc, "nuevo.xml");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -50,73 +48,134 @@ public class SegundaParte {
     }
 
     private Document crearDocumentoXML() throws Exception {
-
-        // Crear documento XML
-        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
-        Document doc = docBuilder.newDocument();
-
-        // Crear elemtento raíz
-        Element information = doc.createElement("information");
-        doc.appendChild(information);
-
-        // Crear el elemento clients
-        Element clients = doc.createElement("clients");
-        information.appendChild(clients);
-
-        Element client1 = doc.createElement("client");
-        client1.setAttribute("id_client", "1");
-        client1.appendChild(doc.createTextNode("Client Name 1"));
-        clients.appendChild(client1);
-
-        Element client2 = doc.createElement("client");
-        client2.setAttribute("id_client", "2");
-        client2.appendChild(doc.createTextNode("Client Name 2"));
-        clients.appendChild(client2);
-
-        // Crear el elemento agencia
-        Element agencies = doc.createElement("agencies");
-        information.appendChild(agencies);
-
-        Element agency1 = doc.createElement("agency");
-        agency1.setAttribute("id_agency", "1");
-        agency1.appendChild(doc.createTextNode("Agency Name 1"));
-        agencies.appendChild(agency1);
-
-        Element agency2 = doc.createElement("agency");
-        agency2.setAttribute("id_agency", "2");
-        agency2.appendChild(doc.createTextNode("Agency Name 2"));
-        agencies.appendChild(agency2);
-
-        // Crear el elemento rooms
-        Element rooms = doc.createElement("rooms");
-        information.appendChild(rooms);
-
-        Element room1 = doc.createElement("room");
-        room1.setAttribute("id_type", "1");
-        room1.appendChild(doc.createTextNode("Room Name 1"));
-        rooms.appendChild(room1);
-
-        Element room2 = doc.createElement("room");
-        room2.setAttribute("id_type", "2");
-        room2.appendChild(doc.createTextNode("Room Name 2"));
-        rooms.appendChild(room2);
-
-        // Crear el elemento hotels
-        Element hotels = doc.createElement("hotels");
-        information.appendChild(hotels);
-
-        Element hotel1 = doc.createElement("hotel");
-        hotel1.setAttribute("id_hotel", "1");
-        hotel1.appendChild(doc.createTextNode("Hotel Name 1"));
-        hotels.appendChild(hotel1);
-
-        Element hotel2 = doc.createElement("hotel");
-        hotel2.setAttribute("id_hotel", "2");
-        hotel2.appendChild(doc.createTextNode("Hotel Name 2"));
-        hotels.appendChild(hotel2);
-
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.newDocument();
+        doc.appendChild(doc.createElement("information"));
         return doc;
+    }
+    
 
+    private void crearClientes(Document document, Document nuevoDocumento) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xPath = xPathFactory.newXPath();
+    
+            String expression = "//booking/client";
+            NodeList nodes = (NodeList) xPath.evaluate(expression, document, XPathConstants.NODESET);
+    
+            Node clientsNode = nuevoDocumento.createElement("clients");
+            System.out.println(nodes.getLength());
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node clientNode = nodes.item(i);
+                String clientId = clientNode.getAttributes().getNamedItem("id_client").getNodeValue();
+                String clientName = clientNode.getTextContent();
+    
+                Element clientElement = nuevoDocumento.createElement("client");
+                clientElement.setTextContent(clientName);
+                clientElement.setAttribute("id_client", clientId);
+    
+                clientsNode.appendChild(clientElement);
+            }
+    
+            nuevoDocumento.getDocumentElement().appendChild(clientsNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+
+    private void crearAgencias(Document document, Document nuevoDocumento) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xPath = xPathFactory.newXPath();
+            String expression = "//booking/agency";
+            NodeList nodes = (NodeList) xPath.evaluate(expression, document, XPathConstants.NODESET);
+            Node agenciesNode = nuevoDocumento.createElement("agencies");
+
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node agencyNode = nodes.item(i);
+                String agencyId = agencyNode.getAttributes().getNamedItem("id_agency").getNodeValue();
+                String agencyName = agencyNode.getTextContent();
+
+                Element agencyElement = nuevoDocumento.createElement("agency");
+                agencyElement.setTextContent(agencyName);
+                agencyElement.setAttribute("id_agency", agencyId);
+
+                agenciesNode.appendChild(agencyElement);
+            }
+            nuevoDocumento.getDocumentElement().appendChild(agenciesNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void crearRooms(Document document, Document nuevoDocumento) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xPath = xPathFactory.newXPath();
+
+            String expression = "//booking/room";
+            NodeList nodes = (NodeList) xPath.evaluate(expression, document, XPathConstants.NODESET);
+
+            Node roomsNode = nuevoDocumento.createElement("rooms");
+
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node roomNode = nodes.item(i);
+                String roomId = roomNode.getAttributes().getNamedItem("id_type").getNodeValue();
+                String roomName = roomNode.getTextContent();
+
+                Element roomElement = nuevoDocumento.createElement("room");
+                roomElement.setTextContent(roomName);
+                roomElement.setAttribute("id_type", roomId);
+
+                roomsNode.appendChild(roomElement);
+            }
+
+            nuevoDocumento.getDocumentElement().appendChild(roomsNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void crearHoteles(Document document, Document nuevoDocumento) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xPath = xPathFactory.newXPath();
+
+            String expression = "//booking/hotel";
+            NodeList nodes = (NodeList) xPath.evaluate(expression, document, XPathConstants.NODESET);
+
+            Node hotelsNode = nuevoDocumento.createElement("hotels");
+
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node hotelNode = nodes.item(i);
+                String hotelId = hotelNode.getAttributes().getNamedItem("id_hotel").getNodeValue();
+                String hotelName = hotelNode.getTextContent();
+
+                Element hotelElement = nuevoDocumento.createElement("hotel");
+                hotelElement.setTextContent(hotelName);
+                hotelElement.setAttribute("id_hotel", hotelId);
+
+                hotelsNode.appendChild(hotelElement);
+            }
+
+            nuevoDocumento.getDocumentElement().appendChild(hotelsNode);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void guardarXML(Document document, String filePath) {
+        try {
+            javax.xml.transform.TransformerFactory transformerFactory = javax.xml.transform.TransformerFactory.newInstance();
+            javax.xml.transform.Transformer transformer = transformerFactory.newTransformer();
+            javax.xml.transform.dom.DOMSource source = new javax.xml.transform.dom.DOMSource(document);
+            javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(new File(filePath));
+            transformer.transform(source, result);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
