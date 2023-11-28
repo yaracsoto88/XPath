@@ -11,9 +11,9 @@ import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathConstants;
 
-public class Main {
+public class PrimeraParte {
     public static void main(String[] args) {
-        new Main().inicio();
+        new PrimeraParte().inicio();
     }
 
     private void inicio() {
@@ -25,7 +25,7 @@ public class Main {
             aplicarXPath(document, "//book/title");
 
             // Extraer datos XML
-            extraerDatosXML(document);
+            visualizarDatosExtraidos(document);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,7 +54,7 @@ public class Main {
         }
     }
 
-    private void extraerDatosXML(Document document) {
+    private void visualizarDatosExtraidos(Document document) {
         try {
             XPathFactory xPathFactory = XPathFactory.newInstance();
             XPath xPath = xPathFactory.newXPath();
